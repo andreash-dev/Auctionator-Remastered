@@ -1,0 +1,83 @@
+## Interface: 30300
+## Title: Auctionator Remastered - Main module
+## LoadOnDemand: 1
+## Dependencies: AuctionatorRemastered_Startup
+## X-AuctionatorRemastered-Component: Engine
+## Version: 0.9.0-beta.1
+## Author: Nisho (Remastered), Zirco (original)
+## X-Remastered-By: Nisho
+## X-Original-Author: Zirco
+## X-Website: https://github.com/andreash-dev/Auctionator-Remastered-WotLK
+## X-Localizations: enUS, deDE, ruRU, svSE, frFR, esES, zhTW
+## Notes: Remastered by Nisho. Offline browsing, price history, market comparisons and shared shopping lists for WoW 3.3.5a. Original addon by Zirco.
+## SavedVariablesPerCharacter: AUCTIONATOR_SHOW_ST_PRICE, AUCTIONATOR_ENABLE_ALT, AUCTIONATOR_OPEN_FIRST, AUCTIONATOR_OPEN_BUY, AUCTIONATOR_OPEN_ALL_BAGS, AUCTIONATOR_DEF_DURATION, AUCTIONATOR_SHOW_TIPS, AUCTIONATOR_V_TIPS, AUCTIONATOR_A_TIPS, AUCTIONATOR_D_TIPS, AUCTIONATOR_SHIFT_TIPS, AUCTIONATOR_DE_DETAILS_TIPS, AUCTIONATOR_DEFTAB
+## SavedVariables: AUCTIONATOR_BROWSER_SETTINGS, AUCTIONATOR_PURCHASES, AUCTIONATOR_OWN_AUCTIONS, AUCTIONATOR_DATABASE_STATS, AUCTIONATOR_MARKET_HISTORY_DAYS, AUCTIONATOR_MARKET_HISTORY_UPGRADED, AUCTIONATOR_SAVEDVARS, AUCTIONATOR_PRICING_HISTORY, AUCTIONATOR_SHOPPING_LISTS, AUCTIONATOR_REMASTERED_DATABASE, AUCTIONATOR_LAST_SCAN_TIME, AUCTIONATOR_TOONS, AUCTIONATOR_STACKING_PREFS, AUCTIONATOR_SCAN_MINLEVEL, AUCTIONATOR_DB_MAXITEM_AGE, AUCTIONATOR_DB_MAXHIST_AGE, AUCTIONATOR_DB_MAXHIST_DAYS, AUCTIONATOR_DC_PAUSE, AUCTIONATOR_DE_DATA, AUCTIONATOR_DE_DATA_BAK
+
+Locales\enUS.lua
+Locales\deDE.lua
+Locales\ruRU.lua
+Locales\frFR.lua
+Locales\svSE.lua
+Locales\esES.lua
+Locales\zhTW.lua
+
+Remastered\Core\Bootstrap.lua
+Remastered\Integration\LegacyBridge.lua
+Remastered\Models\ItemIdentity.lua
+Remastered\Models\Database.lua
+Remastered\Models\ItemMetadata.lua
+
+Legacy\zcUtils.lua
+
+Legacy\AtrErrorInspector.lua
+Legacy\Auctionator.lua
+Legacy\AuctionatorShop.lua
+
+Legacy\Auctionator.xml
+
+Legacy\AuctionatorLocalize.lua
+Legacy\AuctionatorPane.lua
+Legacy\AuctionatorDatabase.lua
+Legacy\AuctionatorScan.lua
+Legacy\AuctionatorScanFull.lua
+Legacy\AuctionatorQuery.lua
+Legacy\AuctionatorHints.lua
+Legacy\AuctionatorVendor.lua
+Legacy\AuctionatorConflicts.lua
+Legacy\AuctionatorAPI.lua
+Legacy\AuctionatorConfig.lua
+Legacy\AuctionatorBuy.lua
+
+Legacy\AuctionatorConfig.xml
+
+
+Remastered\Models\Sellers.lua
+Remastered\Integration\AuctionDetails.lua
+Remastered\Integration\ElvUI.lua
+Remastered\Models\MarketHistory.lua
+Remastered\Integration\MarketHistory.lua
+Remastered\Integration\Database.lua
+Remastered\Integration\FullScan.lua
+Remastered\Integration\ScanControls.lua
+Remastered\Integration\MarketPercent.lua
+Remastered\Data\DatabaseStats.lua
+Remastered\Data\OwnAuctions.lua
+Remastered\Data\Purchases.lua
+Remastered\Models\Deals.lua
+Remastered\UI\Theme.lua
+Remastered\UI\Appearance.lua
+Remastered\Features\Deals.lua
+Remastered\Models\TradingLogs.lua
+Remastered\Features\TradingLogs.lua
+Remastered\Data\ItemBase.lua
+Remastered\Data\ItemCatalog.lua
+Remastered\Data\BrowserData.lua
+Remastered\Models\BrowserCategories.lua
+Remastered\Features\Browser.lua
+Remastered\UI\Launcher.lua
+Remastered\Integration\BrowserMetadata.lua
+Remastered\Features\ShoppingPlanner.lua
+Remastered\Integration\AFKGuard.lua
+Remastered\Features\PriceChart.lua
+
+Legacy\AuctionatorTradeSkill.lua

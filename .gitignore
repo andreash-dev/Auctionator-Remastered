@@ -1,0 +1,35 @@
+# Local backups and packaged downloads
+/backups/
+/dist/
+*.zip
+*.7z
+*.tar.gz
+
+# WoW account data and exported personal databases
+/WTF/
+**/SavedVariables/
+/Auctionator.lua
+/Auctionator.lua.bak
+/Auctionator.lua.*
+*.bak
+*.old
+
+# Local tools, private configuration and Git staging metadata
+/.agents/
+/.codex/
+/.aws/
+/.git-staging/
+.env
+.env.*
+*.pem
+*.key
+
+# Generated/interpreter/editor files
+__pycache__/
+*.py[cod]
+*.luac
+*.log
+.DS_Store
+Thumbs.db
+*.swp
+*~

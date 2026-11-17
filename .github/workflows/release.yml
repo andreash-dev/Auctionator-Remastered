@@ -1,0 +1,62 @@
+name: Package and publish addon
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - AuctionatorRemastered/AuctionatorRemastered.toc
+      - AuctionatorRemastered_Startup/AuctionatorRemastered_Startup.toc
+      - .github/workflows/release.yml
+      - tools/build_release.py
+      - .github/release-notes.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: addon-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'andreash-dev/Auctionator-Remastered-WotLK' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Validate addon and regressions
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lua5.1
+          python3 tools/check_addon.py --tests
+      - name: Build and verify installation ZIP
+        id: package
+        run: python3 tools/build_release.py --github-output "$GITHUB_OUTPUT"
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.package.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.package.outputs.version }}
+          RELEASE_ARCHIVE: ${{ steps.package.outputs.archive }}
+          RELEASE_COMMIT: ${{ steps.package.outputs.commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes=".github/release-notes.md"
+          test -f "$notes"
+          # Keep beta in the version/tag; publish it as the visible Latest download.
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh api --method PATCH "repos/$GH_REPO/git/refs/tags/$RELEASE_TAG" -f sha="$RELEASE_COMMIT" -F force=true >/dev/null
+            gh release edit "$RELEASE_TAG" --title "Auctionator Remastered" --notes-file "$notes"
+          else
+            gh release create "$RELEASE_TAG" --target "$RELEASE_COMMIT" \
+              --title "Auctionator Remastered" --notes-file "$notes" --draft
+          fi
+          (cd "$(dirname "$RELEASE_ARCHIVE")" && sha256sum "$(basename "$RELEASE_ARCHIVE")") > "$RELEASE_ARCHIVE.sha256"
+          gh release upload "$RELEASE_TAG" "$RELEASE_ARCHIVE" "$RELEASE_ARCHIVE.sha256" RELEASE_CHANGELOG.md --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --prerelease=false --latest
