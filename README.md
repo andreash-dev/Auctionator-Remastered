@@ -96,7 +96,9 @@ Developed by **Nisho** for **World of Warcraft 3.3.5a**, and tested on **Warmane
 | --- | --- |
 | ![Deals](screenshots/deals.webp) | ![Trading Logs](screenshots/trading-logs.webp) |
 
-<img src="screenshots/full-scan.webp" alt="Full Scan" width="400">
+| Full Scan |
+| --- |
+| <img src="screenshots/full-scan.webp" alt="Full Scan" width="400"> |
 
 ## Installation
 
