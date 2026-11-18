@@ -82,6 +82,22 @@ Developed by **Nisho** for **World of Warcraft 3.3.5a**, and tested on **Warmane
 - Built-in seller information and merchant pricing, without requiring Auctionator MiniFeatures.
 - Startup conflict detection for other enabled Auctionator versions and MiniFeatures.
 
+## Screenshots
+
+| Offline Browser | Price history |
+| --- | --- |
+| ![Offline Browser](screenshots/offline-browser.webp) | ![Price history](screenshots/price-history.webp) |
+
+| Buy | Sell |
+| --- | --- |
+| ![Buy](screenshots/buy.webp) | ![Sell](screenshots/sell.webp) |
+
+| Deals | Trading Logs |
+| --- | --- |
+| ![Deals](screenshots/deals.webp) | ![Trading Logs](screenshots/trading-logs.webp) |
+
+![Full Scan](screenshots/full-scan.webp)
+
 ## Installation
 
 1. Close WoW completely.

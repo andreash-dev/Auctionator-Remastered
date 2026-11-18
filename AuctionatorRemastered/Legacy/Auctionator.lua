@@ -86,6 +86,7 @@ local gTradeSkillFrameModded = false
 
 -- set to the last item posted, even after the posting so that message and icon can be displayed
 local gJustPosted = { ItemName=nil, ItemLink=nil, BuyoutPrice=0, StackSize=0, NumStacks=0 }
+local gPostingOwnerListReady = false;
 
 local auctionator_pending_message = nil;
 
@@ -162,6 +163,7 @@ function Atr_RegisterEvents(self)
 
 	self:RegisterEvent("NEW_AUCTION_UPDATE");
 	self:RegisterEvent("CHAT_MSG_ADDON");
+	self:RegisterEvent("CHAT_MSG_SYSTEM");
 	self:RegisterEvent("PLAYER_ENTERING_WORLD");
 
 end
@@ -187,6 +189,7 @@ function Atr_EventHandler(self, event, ...)
 	if (event == "AUCTION_HOUSE_SHOW")			then	Atr_OnAuctionHouseShow(); 			end;
 	if (event == "AUCTION_HOUSE_CLOSED")		then	Atr_OnAuctionHouseClosed(); 		end;
 	if (event == "NEW_AUCTION_UPDATE")			then	Atr_OnNewAuctionUpdate(); 			end;
+	if (event == "CHAT_MSG_SYSTEM") then Atr_OnAuctionPostedMessage(...); end;
 	if (event == "CHAT_MSG_ADDON")				then	Atr_OnChatMsgAddon(...); 			end;
 	if (event == "PLAYER_ENTERING_WORLD")		then	Atr_OnPlayerEnteringWorld(); 		end;
 
@@ -1673,6 +1676,60 @@ end
 
 -----------------------------------------
 
+-- Count only a complete, previously received owner list; never query the AH here.
+function Atr_CountPostedOwnerAuctions()
+    if not gPostingOwnerListReady then return nil end
+    local count, total = GetNumAuctionItems("owner");
+    if not count or (total and total ~= count) then return nil end
+    local matches = 0;
+    local identity = zc.ItemIDStrfromLink(gJustPosted.ItemLink);
+    if not identity then return nil end
+    for index = 1, count do
+        local name, _, size, _, _, _, _, _, buyout = GetAuctionItemInfo("owner", index);
+        local link = GetAuctionItemLink("owner", index);
+        if not name or not link then return nil end
+        if size == gJustPosted.StackSize and buyout == gJustPosted.BuyoutPrice
+            and zc.ItemIDStrfromLink(link) == identity then matches = matches + 1 end
+    end
+    return matches;
+end
+
+function Atr_ResetPostingProgress()
+    gJustPosted.confirmed = 0;
+    gJustPosted.systemConfirmed = 0;
+    gJustPosted.logged = false;
+    gJustPosted.ownerBaseline = Atr_CountPostedOwnerAuctions();
+end
+
+-- All confirmation sources report cumulative progress for the same posting.
+-- An owner update and a multi-sell/chat event must never insert the same stack twice.
+function Atr_ConfirmPostedAuctions(total)
+    if not gJustPosted.ItemName or not gJustPosted.confirmed then return end
+    total = math.min(gJustPosted.NumStacks, math.max(0, tonumber(total) or 0));
+    local delta = total - gJustPosted.confirmed;
+    if delta <= 0 then return end
+    gJustPosted.confirmed = total;
+    Atr_AddToScan(gJustPosted.ItemLink, gJustPosted.ItemName, gJustPosted.StackSize, gJustPosted.BuyoutPrice, delta);
+    if total == gJustPosted.NumStacks then
+        Atr_FinishPostingProgress();
+    end
+end
+
+function Atr_FinishPostingProgress()
+    if not gJustPosted.logged and (gJustPosted.confirmed or 0) > 0 then
+        Atr_LogMsg(gJustPosted.ItemLink, gJustPosted.StackSize, gJustPosted.BuyoutPrice, gJustPosted.confirmed);
+        Atr_AddHistoricalPrice(gJustPosted.ItemName, gJustPosted.BuyoutPrice / gJustPosted.StackSize, gJustPosted.StackSize, gJustPosted.ItemLink);
+        gJustPosted.logged = true;
+    end
+    gAtr_SellTriggeredByAuctionator = false;
+end
+
+function Atr_OnAuctionPostedMessage(message)
+    if message ~= ERR_AUCTION_STARTED or not gAtr_SellTriggeredByAuctionator then return end
+    gJustPosted.systemConfirmed = (gJustPosted.systemConfirmed or 0) + 1;
+    Atr_ConfirmPostedAuctions(gJustPosted.systemConfirmed);
+end
+
 function Atr_CreateAuction_OnClick ()
 
 	gAtr_SellTriggeredByAuctionator = true;
@@ -1695,6 +1752,7 @@ function Atr_CreateAuction_OnClick ()
 
 	Atr_Memorize_Stacking_If();
 
+	Atr_ResetPostingProgress();
 	StartAuction (stackStartingPrice, stackBuyoutPrice, duration, gJustPosted.StackSize, gJustPosted.NumStacks);
 	
 	Atr_SetTextureButton ("Atr_SellControls_Tex", 0, nil);
@@ -1728,55 +1786,20 @@ end
 -----------------------------------------
 
 function Atr_OnAuctionMultiSellUpdate(...)
-	
-	if (not gAtr_SellTriggeredByAuctionator) then
-		zc.md ("skipping.  gAtr_SellTriggeredByAuctionator is false");
-		return;
-	end
-
-	local stacksSoFar, stacksTotal = ...;
-		
-	--zc.md ("stacksSoFar: ", stacksSoFar, "stacksTotal: ", stacksTotal);
-	
-	local delta = stacksSoFar - gMS_stacksPrev;
-
-	gMS_stacksPrev = stacksSoFar;
-
-	Atr_AddToScan (gJustPosted.ItemLink, gJustPosted.ItemName, gJustPosted.StackSize, gJustPosted.BuyoutPrice, delta);
-	
-	if (stacksSoFar == stacksTotal) then
-		Atr_LogMsg (gJustPosted.ItemLink, gJustPosted.StackSize, gJustPosted.BuyoutPrice, stacksTotal);
-		Atr_AddHistoricalPrice (gJustPosted.ItemName, gJustPosted.BuyoutPrice / gJustPosted.StackSize, gJustPosted.StackSize, gJustPosted.ItemLink);
-		gAtr_SellTriggeredByAuctionator = false;     -- reset
-	end
-	
+    if not gAtr_SellTriggeredByAuctionator then return end
+    local stacksSoFar = ...;
+    gMS_stacksPrev = math.max(gMS_stacksPrev or 0, tonumber(stacksSoFar) or 0);
+    Atr_ConfirmPostedAuctions(gMS_stacksPrev);
 end
 
 -----------------------------------------
 
 function Atr_OnAuctionMultiSellFailure()
-
-	if (not gAtr_SellTriggeredByAuctionator) then
-		zc.md ("skipping.  gAtr_SellTriggeredByAuctionator is false");
-		return;
-	end
-
-	-- add one more.  no good reason other than it just seems to work
-	Atr_AddToScan (gJustPosted.ItemLink, gJustPosted.ItemName, gJustPosted.StackSize, gJustPosted.BuyoutPrice, 1);
-
-	-- Only log stacks confirmed by multi-sell progress events.
-	if (gMS_stacksPrev > 0) then
-		Atr_LogMsg (gJustPosted.ItemLink, gJustPosted.StackSize, gJustPosted.BuyoutPrice, gMS_stacksPrev);
-	end
-	Atr_AddHistoricalPrice (gJustPosted.ItemName, gJustPosted.BuyoutPrice / gJustPosted.StackSize, gJustPosted.StackSize, gJustPosted.ItemLink);
-
-	gAtr_SellTriggeredByAuctionator = false;     -- reset
-	
-	if (gCurrentPane.activeScan) then
-		gCurrentPane.activeScan.whenScanned = 0;
-	end
+    if not gAtr_SellTriggeredByAuctionator then return end
+    -- Failure is not evidence of one extra successful auction.
+    Atr_FinishPostingProgress();
+    if gSellPane and gSellPane.activeScan then gSellPane.activeScan.whenScanned = 0 end
 end
-
 
 -----------------------------------------
 
@@ -1820,36 +1843,16 @@ end
 -----------------------------------------
 
 function Atr_OnAuctionOwnedUpdate ()
-
-	gItemPostingInProgress = false;
-	
-	if (Atr_IsModeActiveAuctions()) then
-		gHlistNeedsUpdate = true;
-	end
-
-	if (gAtr_FullScanState ~= ATR_FS_NULL) then return end
-
-	if (not Atr_IsTabSelected()) then
-		Atr_ClearScanCache();		-- if not our tab, we have no idea what happened so must flush all caches
-		return;
-	end;
-
-	gActiveAuctions = {};		-- always flush this cache
-
-	if (gAtr_SellTriggeredByAuctionator) then
-	
-		if (gJustPosted.ItemName) then
-
-			if (gJustPosted.NumStacks == 1) then
-				Atr_LogMsg (gJustPosted.ItemLink, gJustPosted.StackSize, gJustPosted.BuyoutPrice, 1);
-				Atr_AddHistoricalPrice (gJustPosted.ItemName, gJustPosted.BuyoutPrice / gJustPosted.StackSize, gJustPosted.StackSize, gJustPosted.ItemLink);
-				Atr_AddToScan (gJustPosted.ItemLink, gJustPosted.ItemName, gJustPosted.StackSize, gJustPosted.BuyoutPrice, 1);
-			
-				gAtr_SellTriggeredByAuctionator = false;     -- reset
-			end
-		end
-	end
-	
+    gPostingOwnerListReady = true;
+    gItemPostingInProgress = false;
+    if Atr_IsModeActiveAuctions() then gHlistNeedsUpdate = true end
+    if gAtr_FullScanState ~= ATR_FS_NULL then return end
+    gActiveAuctions = {};
+    if gAtr_SellTriggeredByAuctionator and gJustPosted.ownerBaseline ~= nil then
+        local count = Atr_CountPostedOwnerAuctions();
+        if count then Atr_ConfirmPostedAuctions(count - gJustPosted.ownerBaseline) end
+    end
+    if not Atr_IsTabSelected() then Atr_ClearScanCache() end
 end
 
 -----------------------------------------
@@ -2838,6 +2841,9 @@ end
 
 function Atr_OnAuctionHouseClosed()
 	if (not AuctionatorInited) then return; end
+	gAtr_SellTriggeredByAuctionator = false;
+	gJustPosted.confirmed = nil;
+	gPostingOwnerListReady = false;
 
 	Atr_HideAllDialogs();
 	

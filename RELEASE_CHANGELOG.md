@@ -4,6 +4,12 @@ A remastered edition of Auctionator 3.1.5 for World of Warcraft: Wrath of the Li
 
 **Auctionator Remastered by Nisho.** Based on the original Auctionator by **Zirco (Thunderhorn US)**. Original contributor credits are retained.
 
+## Next update — Unreleased
+
+- Fix Sell listings remaining stale after posting: use server creation acknowledgements and changes in the loaded owner list alongside multi-sell progress to update the visible results without a manual refresh.
+- Reconcile overlapping posting confirmations so single auctions and batches are inserted and logged only once.
+- Stop adding an unconfirmed extra auction after a failed batch; record only confirmed postings and clear pending confirmations when the auction house closes.
+
 ## Remastered database
 
 - Store prices under stable item-ID/signed-suffix keys, with locale-specific name aliases and separate realm/faction histories.
