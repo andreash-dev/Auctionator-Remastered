@@ -6,6 +6,8 @@ A remastered edition of Auctionator 3.1.5 for World of Warcraft: Wrath of the Li
 
 ## Next update — Unreleased
 
+- Fix a bag-update Lua error during disenchanting in groups: track only the player's own Disenchant casts and require a valid before-cast bag snapshot before comparing inventory changes.
+
 - Fix Sell listings remaining stale after posting: use server creation acknowledgements and changes in the loaded owner list alongside multi-sell progress to update the visible results without a manual refresh.
 - Reconcile overlapping posting confirmations so single auctions and batches are inserted and logged only once.
 - Stop adding an unconfirmed extra auction after a failed batch; record only confirmed postings and clear pending confirmations when the auction house closes.

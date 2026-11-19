@@ -1039,10 +1039,11 @@ end
 
 function Atr_OnSpellCastSent (...)
 
-	if (select (2,...) ~= "Disenchant") then
+	if (select(1, ...) ~= "player" or select(2, ...) ~= "Disenchant") then
 		return;
 	end
 	
+	gDisenchantTime = 0;
 	preDEmats = {};
 	preDEgear = {};
 	
@@ -1054,10 +1055,12 @@ end
 
 function Atr_OnSpellCastSucess (...)
 
-	if (select (2,...) ~= "Disenchant") then
+	if (select(1, ...) ~= "player" or select(2, ...) ~= "Disenchant") then
 		return;
 	end
 	
+	-- A success event alone does not provide a before-cast bag snapshot.
+	if type(preDEmats) ~= "table" or type(preDEgear) ~= "table" then return end
 	gDisenchantTime = time();
 
 --[[	local k, m, g;
@@ -1078,10 +1081,15 @@ end
 
 function Atr_OnBagUpdate (...)
 
-	if (time() - gDisenchantTime > 5) then
+	if (gDisenchantTime <= 0 or time() - gDisenchantTime > 5) then
 		return;
 	end
 	
+	if type(preDEmats) ~= "table" or type(preDEgear) ~= "table" then
+		gDisenchantTime = 0;
+		return;
+	end
+
 	local postMats = {};
 	local postGear = {};
 	
